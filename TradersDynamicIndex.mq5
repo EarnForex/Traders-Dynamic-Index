@@ -6,7 +6,7 @@
 //+------------------------------------------------------------------+
 #property copyright "www.EarnForex.com, 2015-2022"
 #property link      "https://www.earnforex.com/metatrader-indicators/Traders-Dynamic-Index/"
-#property version   "1.05"
+#property version   "1.06"
 
 #property description "Shows trend direction, strength, and volatility."
 #property description "Green line  - RSI Price line."
@@ -115,7 +115,7 @@ int OnInit()
     PlotIndexSetDouble(3, PLOT_EMPTY_VALUE, 0);
     PlotIndexSetDouble(4, PLOT_EMPTY_VALUE, 0);
 
-    if (UpperTimeframe != Period())
+    if (PeriodSeconds(UpperTimeframe) != PeriodSeconds(Period()))
     {
         SetIndexBuffer(6, _RSIBuf, INDICATOR_CALCULATIONS);
         SetIndexBuffer(7, _UpZone, INDICATOR_CALCULATIONS);
@@ -133,7 +133,7 @@ int OnInit()
 
     IndicatorSetInteger(INDICATOR_DIGITS, 1);
 
-    RSI_handle = iRSI(Symbol(), Period(), RSI_Period, RSI_Price);
+    RSI_handle = iRSI(Symbol(), UpperTimeframe, RSI_Period, RSI_Price);
 
     MaxPeriod = Volatility_Band + RSI_Period;
 
@@ -176,7 +176,7 @@ int OnCalculate(const int        rates_total,
     int limit = rates_total - 1 - counted_bars;
     if (limit > rates_total - MaxPeriod - 1) limit = rates_total - MaxPeriod - 1;
 
-    if (UpperTimeframe == Period())
+    if (PeriodSeconds(UpperTimeframe) == PeriodSeconds(Period()))
     {
         if (FillIndicatorBuffers((ENUM_TIMEFRAMES)Period(), limit, RSIBuf, UpZone, DnZone, MdZone, MaBuf, MbBuf) == -1) return 0; // No RSI data yet.
     }
@@ -186,6 +186,7 @@ int OnCalculate(const int        rates_total,
         if (upper_prev_counted > 0) upper_prev_counted--;
         int upper_limit = iBars(Symbol(), UpperTimeframe) - 1 - upper_prev_counted;
         if (upper_limit > iBars(Symbol(), UpperTimeframe) - MaxPeriod - 1) upper_limit = iBars(Symbol(), UpperTimeframe) - MaxPeriod - 1;
+        if (upper_limit > rates_total - Volatility_Band) upper_limit = rates_total - Volatility_Band; // Buffers cannot hold more than the current period's bars worth of data!
         upper_prev_counted = FillIndicatorBuffers(UpperTimeframe, upper_limit, _RSIBuf, _UpZone, _DnZone, _MdZone, _MaBuf, _MbBuf);
         if (upper_prev_counted == -1) return 0; // No RSI data yet.
         for (int i = 0, j = 0; Time[i] >= iTime(Symbol(), UpperTimeframe, upper_limit); i++)
@@ -458,7 +459,7 @@ int FillIndicatorBuffers(ENUM_TIMEFRAMES period, int limit, double& rsibuf[], do
     
     int RSI_bars = CopyBuffer(RSI_handle, 0, 0, i + Volatility_Band, rsibuf); // No need to copy all RSI for too old bars.
 
-    if (RSI_bars == -1) return -1;
+    if (RSI_bars < i + Volatility_Band) return -1;
 
     // Calculate BB on RSI.
     while (i >= 0)
@@ -466,6 +467,7 @@ int FillIndicatorBuffers(ENUM_TIMEFRAMES period, int limit, double& rsibuf[], do
         MA = 0;
         for (int x = i; x < i + Volatility_Band; x++)
         {
+            if ((rsibuf[x] > 100) || (rsibuf[x] < 0)) return -1; // Bad RSI value. Try later.
             RSI[x - i] = rsibuf[x];
             MA += rsibuf[x] / Volatility_Band;
         }

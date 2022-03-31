@@ -6,7 +6,7 @@
 //+------------------------------------------------------------------+
 #property copyright "www.EarnForex.com, 2015-2022"
 #property link      "https://www.earnforex.com/metatrader-indicators/Traders-Dynamic-Index/"
-#property version   "1.05"
+#property version   "1.06"
 #property strict
 
 #property description "Shows trend direction, strength, and volatility."
@@ -136,17 +136,18 @@ int OnCalculate(const int        rates_total,
     int counted_bars = IndicatorCounted();
     if (counted_bars > 0) counted_bars--;
     int limit = Bars - 1 - counted_bars;
-
-    if (UpperTimeframe == Period())
+    if (PeriodSeconds(UpperTimeframe) == PeriodSeconds(Period()))
     {
-        FillIndicatorBuffers((ENUM_TIMEFRAMES)Period(), limit, RSIBuf, UpZone, DnZone, MdZone, MaBuf, MbBuf);
+        if (FillIndicatorBuffers((ENUM_TIMEFRAMES)Period(), limit, RSIBuf, UpZone, DnZone, MdZone, MaBuf, MbBuf) < 0) return 0; // Bad value returned. Data not yet ready. Recalculate everything.
     }
     else
     {
         static int upper_prev_counted = 0;
         if (upper_prev_counted > 0) upper_prev_counted--;
         int upper_limit = iBars(Symbol(), UpperTimeframe) - 1 - upper_prev_counted;
+        if (upper_limit > Bars - Volatility_Band) upper_limit = Bars - Volatility_Band; // Buffers cannot hold more than the current period's bars worth of data!
         upper_prev_counted = FillIndicatorBuffers(UpperTimeframe, upper_limit, _RSIBuf, _UpZone, _DnZone, _MdZone, _MaBuf, _MbBuf);
+        if (upper_prev_counted < -1) return 0; // Bad value returned. Data not yet ready. Recalculate everything.
         for (int i = 0, j = 0; Time[i] >= iTime(Symbol(), UpperTimeframe, upper_limit); i++)
         {
             while ((iTime(Symbol(), UpperTimeframe, j) > Time[i]) && (j < iBars(Symbol(), UpperTimeframe))) j++;
@@ -343,6 +344,7 @@ int FillIndicatorBuffers(ENUM_TIMEFRAMES period, int limit, double& rsibuf[], do
         for (int x = i; x < i + Volatility_Band; x++)
         {
             if (x > bars - 1) break;
+            if ((rsibuf[x] > 100) || (rsibuf[x] < 0)) return -1; // Bad RSI value. Try later.
             RSI[x - i] = rsibuf[x];
             MA += rsibuf[x] / Volatility_Band;
         }
