@@ -1,12 +1,12 @@
 //+------------------------------------------------------------------+
 //|                                          TradersDynamicIndex.mq5 |
-//|                                 Copyright © 2015-2022, EarnForex |
+//|                                      Copyright © 2023, EarnForex |
 //|                                        https://www.earnforex.com |
 //|                         Based on indicator by Dean Malone (2006) |
 //+------------------------------------------------------------------+
-#property copyright "www.EarnForex.com, 2015-2022"
+#property copyright "www.EarnForex.com, 2023"
 #property link      "https://www.earnforex.com/metatrader-indicators/Traders-Dynamic-Index/"
-#property version   "1.06"
+#property version   "1.07"
 
 #property description "Shows trend direction, strength, and volatility."
 #property description "Green line  - RSI Price line."
@@ -56,6 +56,7 @@ enum enum_candle_to_check
     Previous
 };
 
+input group "Main";
 input int RSI_Period = 13; // RSI_Period: 8-25
 input ENUM_APPLIED_PRICE RSI_Price = PRICE_CLOSE;
 input int Volatility_Band = 34; // Volatility_Band: 20-40
@@ -65,16 +66,35 @@ input ENUM_MA_METHOD RSI_Price_Type = MODE_SMA;
 input int Trade_Signal_Line = 7;
 input ENUM_MA_METHOD Trade_Signal_Type = MODE_SMA;
 input ENUM_TIMEFRAMES UpperTimeframe = PERIOD_CURRENT; // UpperTimeframe: If above current will display values from  that timeframe.
+input group "Alerts";
 input bool EnableNativeAlerts = false;
 input bool EnableEmailAlerts = false;
 input bool EnablePushAlerts = false;
 input bool EnableArrowAlerts = false;
-input string ArrowPrefix = "TDI-";
 input bool EnableRedYellowCrossAlert = true; // EnableRedYellowCrossAlert: yellow/red lines alerts.
 input bool EnableHookAlert = false; // EnableHookAlert: Enable green line hook alerts.
 input bool EnableGreenRedCrossAlert = false; // EnableGreenRedCrossAlert: green/red lines alerts.
 input bool EnableYellowGreenCrossAlert = false; // EnableYellowGreenCrossAlert: yellow/green lines alerts.
 input enum_candle_to_check TriggerCandle = Previous;
+input group "Arrows";
+input color RedYellowCrossArrowBullishColor = clrGreen;
+input color RedYellowCrossArrowBearishColor = clrRed;
+input color HookArrowBullishColor = clrGreen;
+input color HookArrowBearishColor = clrRed;
+input color GreenRedCrossArrowBullishColor = clrGreen;
+input color GreenRedCrossArrowBearishColor = clrRed;
+input color YellowGreenCrossArrowBullishColor = clrGreen;
+input color YellowGreenCrossArrowBearishColor = clrRed;
+input uchar RedYellowCrossArrowBullishCode = 233;
+input uchar RedYellowCrossArrowBearishCode = 234;
+input uchar HookArrowBullishCode = 71;
+input uchar HookArrowBearishCode = 72;
+input uchar GreenRedCrossArrowBullishCode = 200;
+input uchar GreenRedCrossArrowBearishCode = 201;
+input uchar YellowGreenCrossArrowBullishCode = 226;
+input uchar YellowGreenCrossArrowBearishCode = 225;
+input int ArrowSize = 1;
+input string ArrowPrefix = "TDI-";
 
 double RSIBuf[], UpZone[], MdZone[], DnZone[], MaBuf[], MbBuf[];
 double _RSIBuf[], _UpZone[], _MdZone[], _DnZone[], _MaBuf[], _MbBuf[]; // For upper timeframe data.
@@ -213,7 +233,6 @@ int OnCalculate(const int        rates_total,
                 SendMail("TDI Alert: BUY " + _Symbol + " @ " + PeriodToString(_Period), "Current rate = " + DoubleToString(SymbolInfoDouble(_Symbol, SYMBOL_BID), _Digits) + "/" + DoubleToString(SymbolInfoDouble(_Symbol, SYMBOL_ASK), _Digits) + "\nIndicator buffers:\nVB High = " + DoubleToString(UpZone[TriggerCandle], 1) + "\nMarket Base Line = " + DoubleToString(MdZone[TriggerCandle], 1) + "\nVB Low = " + DoubleToString(DnZone[TriggerCandle], 1) + "\nRSI Price Line = " + DoubleToString(MaBuf[TriggerCandle], 1) + "\nTrade Signal Line = " + DoubleToString(MbBuf[TriggerCandle], 1));
             }
             if (EnablePushAlerts) SendNotification("TDI Alert: BUY " + _Symbol + " @ " + PeriodToString(_Period));
-            if (EnableArrowAlerts) PutArrow(Low[0], Time[0], Buy, 233, "Bullish cross");
             AlertPlayed = Time[0];
         }
         if ((MbBuf[TriggerCandle] < MdZone[TriggerCandle]) && (MbBuf[TriggerCandle + 1] >= MdZone[TriggerCandle + 1]) && (AlertPlayed != Time[0]))
@@ -224,7 +243,6 @@ int OnCalculate(const int        rates_total,
                 SendMail("TDI Alert: SELL " + _Symbol + " @ " + PeriodToString(_Period), "Current rate = " + DoubleToString(SymbolInfoDouble(_Symbol, SYMBOL_BID), _Digits) + "/" + DoubleToString(SymbolInfoDouble(_Symbol, SYMBOL_ASK), _Digits) + "\nIndicator buffers:\nVB High = " + DoubleToString(UpZone[TriggerCandle], 1) + "\nMarket Base Line = " + DoubleToString(MdZone[TriggerCandle], 1) + "\nVB Low = " + DoubleToString(DnZone[TriggerCandle], 1) + "\nRSI Price Line = " + DoubleToString(MaBuf[TriggerCandle], 1) + "\nTrade Signal Line = " + DoubleToString(MbBuf[TriggerCandle], 1));
             }
             if (EnablePushAlerts) SendNotification("TDI Alert: SELL " + _Symbol + " @ " + PeriodToString(_Period));
-            if (EnableArrowAlerts) PutArrow(High[0], Time[0], Sell, 234, "Bearish cross");
             AlertPlayed = Time[0];
         }
     }
@@ -240,7 +258,6 @@ int OnCalculate(const int        rates_total,
                 SendMail("TDI Hook Alert: SELL " + _Symbol + " @ " + PeriodToString(_Period), "Current rate = " + DoubleToString(SymbolInfoDouble(_Symbol, SYMBOL_BID), _Digits) + "/" + DoubleToString(SymbolInfoDouble(_Symbol, SYMBOL_ASK), _Digits) + "\nIndicator buffers:\nVB High = " + DoubleToString(UpZone[TriggerCandle], 1) + "\nMarket Base Line = " + DoubleToString(MdZone[TriggerCandle], 1) + "\nVB Low = " + DoubleToString(DnZone[TriggerCandle], 1) + "\nRSI Price Line = " + DoubleToString(MaBuf[TriggerCandle], 1) + "\nTrade Signal Line = " + DoubleToString(MbBuf[TriggerCandle], 1));
             }
             if (EnablePushAlerts) SendNotification("TDI Hook Alert: SELL " + _Symbol + " @ " + PeriodToString(_Period));
-            if (EnableArrowAlerts) PutArrow(High[0], Time[0], Sell, 72, "Bearish Hook");
             HookAlertPlayed = Time[0];
         }
         // Green line crosses lower blue line from below when both are below level 32.
@@ -252,7 +269,6 @@ int OnCalculate(const int        rates_total,
                 SendMail("TDI Hook Alert: BUY " + _Symbol + " @ " + PeriodToString(_Period), "Current rate = " + DoubleToString(SymbolInfoDouble(_Symbol, SYMBOL_BID), _Digits) + "/" + DoubleToString(SymbolInfoDouble(_Symbol, SYMBOL_ASK), _Digits) + "\nIndicator buffers:\nVB High = " + DoubleToString(UpZone[TriggerCandle], 1) + "\nMarket Base Line = " + DoubleToString(MdZone[TriggerCandle], 1) + "\nVB Low = " + DoubleToString(DnZone[TriggerCandle], 1) + "\nRSI Price Line = " + DoubleToString(MaBuf[TriggerCandle], 1) + "\nTrade Signal Line = " + DoubleToString(MbBuf[TriggerCandle], 1));
             }
             if (EnablePushAlerts) SendNotification("TDI Hook Alert: BUY " + _Symbol + " @ " + PeriodToString(_Period));
-            if (EnableArrowAlerts) PutArrow(Low[0], Time[0], Buy, 71, "Bullish Hook");
             HookAlertPlayed = Time[0];
         }
     }
@@ -268,7 +284,6 @@ int OnCalculate(const int        rates_total,
                 SendMail("TDI: Green line crossed red one from above - " + _Symbol + " @ " + PeriodToString(_Period), "Current rate = " + DoubleToString(SymbolInfoDouble(_Symbol, SYMBOL_BID), _Digits) + "/" + DoubleToString(SymbolInfoDouble(_Symbol, SYMBOL_ASK), _Digits) + "\nIndicator buffers:\nVB High = " + DoubleToString(UpZone[TriggerCandle], 1) + "\nMarket Base Line = " + DoubleToString(MdZone[TriggerCandle], 1) + "\nVB Low = " + DoubleToString(DnZone[TriggerCandle], 1) + "\nRSI Price Line = " + DoubleToString(MaBuf[TriggerCandle], 1) + "\nTrade Signal Line = " + DoubleToString(MbBuf[TriggerCandle], 1));
             }
             if (EnablePushAlerts) SendNotification("TDI: Green line crossed red one from above - " + _Symbol + " @ " + PeriodToString(_Period));
-            if (EnableArrowAlerts) PutArrow(High[0], Time[0], Sell, 201, "Green line crossed red one from above");
             RedGreenAlertPlayed = Time[0];
         }
         // Green line crosses red one from below.
@@ -280,7 +295,6 @@ int OnCalculate(const int        rates_total,
                 SendMail("TDI: Green line crossed red one from below - " + _Symbol + " @ " + PeriodToString(_Period), "Current rate = " + DoubleToString(SymbolInfoDouble(_Symbol, SYMBOL_BID), _Digits) + "/" + DoubleToString(SymbolInfoDouble(_Symbol, SYMBOL_ASK), _Digits) + "\nIndicator buffers:\nVB High = " + DoubleToString(UpZone[TriggerCandle], 1) + "\nMarket Base Line = " + DoubleToString(MdZone[TriggerCandle], 1) + "\nVB Low = " + DoubleToString(DnZone[TriggerCandle], 1) + "\nRSI Price Line = " + DoubleToString(MaBuf[TriggerCandle], 1) + "\nTrade Signal Line = " + DoubleToString(MbBuf[TriggerCandle], 1));
             }
             if (EnablePushAlerts) SendNotification("TDI: Green line crossed red one from below - " + _Symbol + " @ " + PeriodToString(_Period));
-            if (EnableArrowAlerts) PutArrow(Low[0], Time[0], Buy, 200, "Green line crossed red one from below");
             RedGreenAlertPlayed = Time[0];
         }
     }
@@ -296,7 +310,6 @@ int OnCalculate(const int        rates_total,
                 SendMail("TDI: Green line crossed yellow one from above - " + _Symbol + " @ " + PeriodToString(_Period), "Current rate = " + DoubleToString(SymbolInfoDouble(_Symbol, SYMBOL_BID), _Digits) + "/" + DoubleToString(SymbolInfoDouble(_Symbol, SYMBOL_ASK), _Digits) + "\nIndicator buffers:\nVB High = " + DoubleToString(UpZone[TriggerCandle], 1) + "\nMarket Base Line = " + DoubleToString(MdZone[TriggerCandle], 1) + "\nVB Low = " + DoubleToString(DnZone[TriggerCandle], 1) + "\nRSI Price Line = " + DoubleToString(MaBuf[TriggerCandle], 1) + "\nTrade Signal Line = " + DoubleToString(MbBuf[TriggerCandle], 1));
             }
             if (EnablePushAlerts) SendNotification("TDI: Green line crossed yellow one from above - " + _Symbol + " @ " + PeriodToString(_Period));
-            if (EnableArrowAlerts) PutArrow(High[0], Time[0], Sell, 226, "Green line crossed yellow one from above");
             YellowGreenAlertPlayed = Time[0];
         }
         // Green line crosses yellow one from below.
@@ -308,7 +321,6 @@ int OnCalculate(const int        rates_total,
                 SendMail("TDI: Green line crossed yellow one from below - " + _Symbol + " @ " + PeriodToString(_Period), "Current rate = " + DoubleToString(SymbolInfoDouble(_Symbol, SYMBOL_BID), _Digits) + "/" + DoubleToString(SymbolInfoDouble(_Symbol, SYMBOL_ASK), _Digits) + "\nIndicator buffers:\nVB High = " + DoubleToString(UpZone[TriggerCandle], 1) + "\nMarket Base Line = " + DoubleToString(MdZone[TriggerCandle], 1) + "\nVB Low = " + DoubleToString(DnZone[TriggerCandle], 1) + "\nRSI Price Line = " + DoubleToString(MaBuf[TriggerCandle], 1) + "\nTrade Signal Line = " + DoubleToString(MbBuf[TriggerCandle], 1));
             }
             if (EnablePushAlerts) SendNotification("TDI: Green line crossed yellow one from below - " + _Symbol + " @ " + PeriodToString(_Period));
-            if (EnableArrowAlerts) PutArrow(Low[0], Time[0], Buy, 225, "Green line crossed yellow one from below");
             YellowGreenAlertPlayed = Time[0];
         }
     }
@@ -427,25 +439,26 @@ string PeriodToString(const ENUM_TIMEFRAMES per)
     return StringSubstr(EnumToString(per), 7);
 }
 
-void PutArrow(double price, const datetime time, enum_arrow_type dir, const uchar arrow_code, const string text)
+void PutArrow(const double price, const datetime time, enum_arrow_type dir, const color colour, const uchar arrow_code, const string text)
 {
     string name = ArrowPrefix + "Arrow" + IntegerToString(arrow_code) + TimeToString(time);
     if (ObjectFind(ChartID(), name) > -1) return;
-    color colour;
+    ENUM_ARROW_ANCHOR anchor;
     if (dir == Buy)
     {
-        colour = clrGreen;
+        anchor = ANCHOR_TOP;
     }
     else
     {
-        colour = clrRed;
-        price += 10 * _Point;
+        anchor = ANCHOR_BOTTOM;
     }
     ObjectCreate(ChartID(), name, OBJ_ARROW, 0, time, price);
     ObjectSetInteger(0, name, OBJPROP_ARROWCODE, arrow_code);
+    ObjectSetInteger(0, name, OBJPROP_WIDTH, ArrowSize);
     ObjectSetInteger(0, name, OBJPROP_COLOR, colour);
     ObjectSetInteger(0, name, OBJPROP_SELECTABLE, false);
-    ObjectSetInteger(0, name, OBJPROP_ANCHOR, ANCHOR_BOTTOM);
+    ObjectSetInteger(0, name, OBJPROP_HIDDEN, true);
+    ObjectSetInteger(0, name, OBJPROP_ANCHOR, anchor);
     ObjectSetString(0, name, OBJPROP_TOOLTIP, text);
 }
 
@@ -479,15 +492,68 @@ int FillIndicatorBuffers(ENUM_TIMEFRAMES period, int limit, double& rsibuf[], do
         i--;
     }
 
-    i = limit;
-
     // Calculate MAs of RSI.
-    while (i >= 0)
+    for (int i = limit; i >= 0; i--)
     {
         mabuf[i] = iMAOnArray(rsibuf, 0, RSI_Price_Line, 0, RSI_Price_Type, i);
         mbbuf[i] = iMAOnArray(rsibuf, 0, Trade_Signal_Line, 0, Trade_Signal_Type, i);
 
-        i--;
+        if (EnableArrowAlerts)
+        {
+            if (i + TriggerCandle + 1 >= iBars(Symbol(), period)) continue; // Check if there is enough bars.
+            // Lower timeframe bar index:
+            int lower_i = iBarShift(Symbol(), Period(), iTime(Symbol(), period, i + TriggerCandle), false);
+            if (EnableRedYellowCrossAlert)
+            {
+                if ((mbbuf[i + TriggerCandle] > mdzone[i + TriggerCandle]) && (mbbuf[i + TriggerCandle + 1] <= mdzone[i + TriggerCandle + 1]))
+                {
+                    PutArrow(iLow(Symbol(), Period(), lower_i), iTime(Symbol(), period, i + TriggerCandle), Buy, RedYellowCrossArrowBullishColor, RedYellowCrossArrowBullishCode, "Bullish cross");
+                }
+                if ((mbbuf[i + TriggerCandle] < mdzone[i + TriggerCandle]) && (mbbuf[i + TriggerCandle + 1] >= mdzone[i + TriggerCandle + 1]))
+                {
+                    PutArrow(iHigh(Symbol(), Period(), lower_i), iTime(Symbol(), period, i + TriggerCandle), Sell, RedYellowCrossArrowBearishColor, RedYellowCrossArrowBearishCode, "Bearish cross");
+                }
+            }
+            if (EnableHookAlert)
+            {
+                // Green line crosses upper blue line from above when both are above level 68.
+                if ((mabuf[i + TriggerCandle] < upzone[i + TriggerCandle]) && (mabuf[i + TriggerCandle + 1] >= upzone[i + TriggerCandle + 1]) && ((mabuf[i + TriggerCandle] > 68) || (mabuf[i + TriggerCandle + 1] > 68)) && ((upzone[i + TriggerCandle] > 68) || (upzone[i + TriggerCandle + 1] > 68)))
+                {
+                    PutArrow(iHigh(Symbol(), Period(), lower_i), iTime(Symbol(), period, i + TriggerCandle), Sell, HookArrowBearishColor, HookArrowBearishCode, "Bearish Hook");
+                }
+                // Green line crosses lower blue line from below when both are below level 32.
+                else if ((mabuf[i + TriggerCandle] > dnzone[i + TriggerCandle]) && (mabuf[i + TriggerCandle + 1] <= dnzone[i + TriggerCandle + 1]) && ((mabuf[i + TriggerCandle] < 32) || (mabuf[i + TriggerCandle + 1] < 32)) && ((dnzone[i + TriggerCandle] < 32) || (dnzone[i + TriggerCandle + 1] < 32)))
+                {
+                    PutArrow(iLow(Symbol(), Period(), lower_i), iTime(Symbol(), period, i + TriggerCandle), Buy, HookArrowBullishColor, HookArrowBullishCode, "Bullish Hook");
+                }
+            }
+            if (EnableGreenRedCrossAlert)
+            {
+                // Green line crosses red one from above.
+                if ((mabuf[i + TriggerCandle] < mbbuf[i + TriggerCandle]) && (mabuf[i + TriggerCandle + 1] >= mbbuf[i + TriggerCandle + 1]))
+                {
+                    PutArrow(iHigh(Symbol(), Period(), lower_i), iTime(Symbol(), period, i + TriggerCandle), Sell, GreenRedCrossArrowBearishColor, GreenRedCrossArrowBearishCode, "Green line crossed red one from above");
+                }
+                // Green line crosses red one from below.
+                else if ((mabuf[i + TriggerCandle] > mbbuf[i + TriggerCandle]) && (mabuf[i + TriggerCandle + 1] <= mbbuf[i + TriggerCandle + 1]))
+                {
+                    PutArrow(iLow(Symbol(), Period(), lower_i), iTime(Symbol(), period, i + TriggerCandle), Buy, GreenRedCrossArrowBullishColor, GreenRedCrossArrowBullishCode, "Green line crossed red one from below");
+                }
+            }
+            if (EnableYellowGreenCrossAlert)
+            {
+                // Green line crosses yellow one from above.
+                if ((mabuf[i + TriggerCandle] < mdzone[i + TriggerCandle]) && (mabuf[i + TriggerCandle + 1] >= mdzone[i + TriggerCandle + 1]))
+                {
+                    PutArrow(iHigh(Symbol(), Period(), lower_i), iTime(Symbol(), period, i + TriggerCandle), Sell, YellowGreenCrossArrowBearishColor, YellowGreenCrossArrowBullishCode, "Green line crossed yellow one from above");
+                }
+                // Green line crosses yellow one from below.
+                else if ((mabuf[i + TriggerCandle] > mdzone[i + TriggerCandle]) && (mabuf[i + TriggerCandle + 1] <= mdzone[i + TriggerCandle + 1]))
+                {
+                    PutArrow(iLow(Symbol(), Period(), lower_i), iTime(Symbol(), period, i + TriggerCandle), Buy, YellowGreenCrossArrowBullishColor, YellowGreenCrossArrowBearishCode, "Green line crossed yellow one from below");
+                }
+            }
+        }
     }
     return bars;
 }
