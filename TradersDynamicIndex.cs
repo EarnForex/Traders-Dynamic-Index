@@ -7,8 +7,8 @@
 //   Blue lines  - Volatility Band.
 //   Yellow line - Market Base line.
 //   
-//   Version 1.07
-//   Copyright 2023, EarnForex.com
+//   Version 1.08
+//   Copyright 2025, EarnForex.com
 //   https://www.earnforex.com/metatrader-indicators/Traders-Dynamic-Index/
 // -------------------------------------------------------------------------------
 using System;
@@ -74,6 +74,9 @@ namespace cAlgo.Indicators
 
         [Parameter("Enable alerts when the green line crosses the red line?", DefaultValue = false)]
         public bool EnableGreenRedCrossAlert { get; set; }
+        
+        [Parameter("Enable alerts when the green line crosses the red line while above/below yellow line?", DefaultValue = false)]
+        public bool EnableGreenRedCrossWithYellowAlert { get; set; }
         
         [Parameter("Enable alerts when the yellow line crosses the green line?", DefaultValue = false)]
         public bool EnableYellowGreenCrossAlert { get; set; }
@@ -204,10 +207,12 @@ namespace cAlgo.Indicators
                     {
                         Chart.DrawIcon(ArrowPrefix + "RY" + Bars.OpenTimes[lower_i].ToString(), ChartIconType.UpTriangle, lower_i, Bars.LowPrices[lower_i], Color.FromName(RedYellowCrossArrowBullishColor));
                     }
-                    else if ((MA_Signal.Result[customIndex - int_tc] < VolatilityBands.Main[customIndex - int_tc]) && (MA_Signal.Result[customIndex - int_tc - 1] >= VolatilityBands.Main[customIndex - int_tc - 1]))
+                    else Chart.RemoveObject(ArrowPrefix + "RY" + Bars.OpenTimes[lower_i].ToString());
+                    if ((MA_Signal.Result[customIndex - int_tc] < VolatilityBands.Main[customIndex - int_tc]) && (MA_Signal.Result[customIndex - int_tc - 1] >= VolatilityBands.Main[customIndex - int_tc - 1]))
                     {
                         Chart.DrawIcon(ArrowPrefix + "RY" + Bars.OpenTimes[lower_i].ToString(), ChartIconType.DownTriangle, lower_i, Bars.HighPrices[lower_i], Color.FromName(RedYellowCrossArrowBearishColor));
                     }
+                    else Chart.RemoveObject(ArrowPrefix + "RY" + Bars.OpenTimes[lower_i].ToString());
                 }
                 if (EnableHookAlert)
                 {
@@ -215,10 +220,12 @@ namespace cAlgo.Indicators
                     {
                         Chart.DrawIcon(ArrowPrefix + "H" + Bars.OpenTimes[lower_i].ToString(), ChartIconType.DownArrow, lower_i, Bars.HighPrices[lower_i], Color.FromName(HookArrowBearishColor));
                     }
-                    else if ((MA_Price.Result[customIndex - int_tc] >= VolatilityBands.Bottom[customIndex - int_tc]) && (MA_Price.Result[customIndex - int_tc - 1] < VolatilityBands.Bottom[customIndex - int_tc - 1]) && ((MA_Price.Result[customIndex - int_tc] < 32) || (MA_Price.Result[customIndex - int_tc - 1] < 32)) && ((VolatilityBands.Bottom[customIndex - int_tc] < 32) || (VolatilityBands.Bottom[customIndex - int_tc - 1] < 32)))
+                    else Chart.RemoveObject(ArrowPrefix + "H" + Bars.OpenTimes[lower_i].ToString());
+                    if ((MA_Price.Result[customIndex - int_tc] >= VolatilityBands.Bottom[customIndex - int_tc]) && (MA_Price.Result[customIndex - int_tc - 1] < VolatilityBands.Bottom[customIndex - int_tc - 1]) && ((MA_Price.Result[customIndex - int_tc] < 32) || (MA_Price.Result[customIndex - int_tc - 1] < 32)) && ((VolatilityBands.Bottom[customIndex - int_tc] < 32) || (VolatilityBands.Bottom[customIndex - int_tc - 1] < 32)))
                     {
                         Chart.DrawIcon(ArrowPrefix + "H" + Bars.OpenTimes[lower_i].ToString(), ChartIconType.UpArrow, lower_i, Bars.LowPrices[lower_i], Color.FromName(HookArrowBullishColor));
                     }
+                    else Chart.RemoveObject(ArrowPrefix + "H" + Bars.OpenTimes[lower_i].ToString());
                 }
                 if (EnableGreenRedCrossAlert)
                 {
@@ -226,10 +233,25 @@ namespace cAlgo.Indicators
                     {
                         Chart.DrawIcon(ArrowPrefix + "GR" + Bars.OpenTimes[lower_i].ToString(), ChartIconType.Diamond, lower_i, Bars.HighPrices[lower_i], Color.FromName(HookArrowBearishColor));
                     }
-                    else if ((MA_Price.Result[customIndex - int_tc] > MA_Signal.Result[customIndex - int_tc]) && (MA_Price.Result[customIndex - int_tc - 1] <= MA_Signal.Result[customIndex - int_tc - 1]))
+                    else Chart.RemoveObject(ArrowPrefix + "GR" + Bars.OpenTimes[lower_i].ToString());
+                    if ((MA_Price.Result[customIndex - int_tc] > MA_Signal.Result[customIndex - int_tc]) && (MA_Price.Result[customIndex - int_tc - 1] <= MA_Signal.Result[customIndex - int_tc - 1]))
                     {
                         Chart.DrawIcon(ArrowPrefix + "GR" + Bars.OpenTimes[lower_i].ToString(), ChartIconType.Diamond, lower_i, Bars.LowPrices[lower_i], Color.FromName(HookArrowBullishColor));
                     }
+                    else Chart.RemoveObject(ArrowPrefix + "GR" + Bars.OpenTimes[lower_i].ToString());
+                }
+                if (EnableGreenRedCrossWithYellowAlert)
+                {
+                    if ((MA_Price.Result[customIndex - int_tc] < MA_Signal.Result[customIndex - int_tc]) && (MA_Price.Result[customIndex - int_tc - 1] >= MA_Signal.Result[customIndex - int_tc - 1]) && (MA_Price.Result[customIndex - int_tc] < VolatilityBands.Main[customIndex - int_tc]) && (MA_Signal.Result[customIndex - int_tc] < VolatilityBands.Main[customIndex - int_tc]))
+                    {
+                        Chart.DrawIcon(ArrowPrefix + "GRY" + Bars.OpenTimes[lower_i].ToString(), ChartIconType.Diamond, lower_i, Bars.HighPrices[lower_i], Color.FromName(HookArrowBearishColor));
+                    }
+                    else Chart.RemoveObject(ArrowPrefix + "GRY" + Bars.OpenTimes[lower_i].ToString());
+                    if ((MA_Price.Result[customIndex - int_tc] > MA_Signal.Result[customIndex - int_tc]) && (MA_Price.Result[customIndex - int_tc - 1] <= MA_Signal.Result[customIndex - int_tc - 1]) && (MA_Price.Result[customIndex - int_tc] > VolatilityBands.Main[customIndex - int_tc]) && (MA_Signal.Result[customIndex - int_tc] > VolatilityBands.Main[customIndex - int_tc]))
+                    {
+                        Chart.DrawIcon(ArrowPrefix + "GRY" + Bars.OpenTimes[lower_i].ToString(), ChartIconType.Diamond, lower_i, Bars.LowPrices[lower_i], Color.FromName(HookArrowBullishColor));
+                    }
+                    else Chart.RemoveObject(ArrowPrefix + "GRY" + Bars.OpenTimes[lower_i].ToString());
                 }
                 if (EnableYellowGreenCrossAlert)
                 {
@@ -237,10 +259,12 @@ namespace cAlgo.Indicators
                     {
                         Chart.DrawIcon(ArrowPrefix + "YG" + Bars.OpenTimes[lower_i].ToString(), ChartIconType.Star, lower_i, Bars.HighPrices[lower_i], Color.FromName(HookArrowBearishColor));
                     }
-                    else if ((MA_Price.Result[customIndex - int_tc] > VolatilityBands.Main[customIndex - int_tc]) && (MA_Price.Result[customIndex - int_tc - 1] <= VolatilityBands.Main[customIndex - int_tc - 1]))
+                    else Chart.RemoveObject(ArrowPrefix + "YG" + Bars.OpenTimes[lower_i].ToString());
+                    if ((MA_Price.Result[customIndex - int_tc] > VolatilityBands.Main[customIndex - int_tc]) && (MA_Price.Result[customIndex - int_tc - 1] <= VolatilityBands.Main[customIndex - int_tc - 1]))
                     {
                         Chart.DrawIcon(ArrowPrefix + "YG" + Bars.OpenTimes[lower_i].ToString(), ChartIconType.Star, lower_i, Bars.LowPrices[lower_i], Color.FromName(HookArrowBullishColor));
                     }
+                    else Chart.RemoveObject(ArrowPrefix + "YG" + Bars.OpenTimes[lower_i].ToString());
                 }
             }
 
@@ -290,6 +314,21 @@ namespace cAlgo.Indicators
                 else if ((MA_Price.Result[customIndex - int_tc] > MA_Signal.Result[customIndex - int_tc]) && (MA_Price.Result[customIndex - int_tc - 1] <= MA_Signal.Result[customIndex - int_tc - 1]))
                 {
                     Text = "TDI Alert: " + Symbol.Name + " - " + TimeFrame.Name + " - Green line crossed red one from below";
+                    DoAlert(customIndex, Text);
+                    LastAlertTimeGreenRed = customBars.OpenTimes.LastValue;
+                }
+            }
+            if ((EnableGreenRedCrossWithYellowAlert) && (LastAlertTimeGreenRed > unix_epoch) && (customBars.OpenTimes.LastValue > LastAlertTimeGreenRed))
+            {
+                if ((MA_Price.Result[customIndex - int_tc] < MA_Signal.Result[customIndex - int_tc]) && (MA_Price.Result[customIndex - int_tc - 1] >= MA_Signal.Result[customIndex - int_tc - 1]) && (MA_Price.Result[customIndex - int_tc] < VolatilityBands.Main[customIndex - int_tc]) && (MA_Signal.Result[customIndex - int_tc] < VolatilityBands.Main[customIndex - int_tc]))
+                {
+                    Text = "TDI Alert: " + Symbol.Name + " - " + TimeFrame.Name + " - Green line crossed red one from above while both below yellow";
+                    DoAlert(customIndex, Text);
+                    LastAlertTimeGreenRed = customBars.OpenTimes.LastValue;
+                }
+                else if ((MA_Price.Result[customIndex - int_tc] > MA_Signal.Result[customIndex - int_tc]) && (MA_Price.Result[customIndex - int_tc - 1] <= MA_Signal.Result[customIndex - int_tc - 1]) && (MA_Price.Result[customIndex - int_tc] > VolatilityBands.Main[customIndex - int_tc]) && (MA_Signal.Result[customIndex - int_tc] > VolatilityBands.Main[customIndex - int_tc]))
+                {
+                    Text = "TDI Alert: " + Symbol.Name + " - " + TimeFrame.Name + " - Green line crossed red one from below while both above yellow";
                     DoAlert(customIndex, Text);
                     LastAlertTimeGreenRed = customBars.OpenTimes.LastValue;
                 }
