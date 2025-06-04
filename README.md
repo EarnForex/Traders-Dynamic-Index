@@ -6,6 +6,6 @@ The indicator supports all sorts of alerts, including arrows in the main window 
 
 ![Traders Dynamic Index with multi-timeframe display of the H4 period over an H1 chart](https://github.com/EarnForex/Traders-Dynamic-Index/blob/main/README_Images/traders-dynamic-index-mtf-h1-h4.png)
 
-More information about this custom MetaTrader/cTrader indicator is available here: https://www.earnforex.com/metatrader-indicators/Traders-Dynamic-Index/
+More information about this custom MetaTrader/cTrader indicator is available here: https://www.earnforex.com/indicators/Traders-Dynamic-Index/
 
 Any contributions to the code are welcome!
